@@ -128,7 +128,6 @@ const EmptyStateDocuments = ({ onUpload }) => (
 // --- Main App Inner Component ---
 const MainApp = () => {
   // --- STATE ---
-  // Simplificado para Demo: Solo Web
   const activeChannel = 'web';
   const [activeSection, setActiveSection] = useState('configuracion');
   const [highlightConversationId, setHighlightConversationId] = useState(null);
@@ -160,17 +159,18 @@ const MainApp = () => {
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, fileName: '' });
   const fileInputRef = useRef(null);
 
-  // --- CONSTANTS (from environment variables) ---
+  // --- CONSTANTS ---
   const LAMBDA_SAVE_CONFIG_URL = import.meta.env.VITE_LAMBDA_SAVE_CONFIG;
   const LAMBDA_GENERATE_UPLOAD_URL = import.meta.env.VITE_LAMBDA_GENERATE_UPLOAD;
   const LAMBDA_LIST_DOCS_URL = import.meta.env.VITE_LAMBDA_LIST_DOCS;
   const LAMBDA_DELETE_DOC_URL = import.meta.env.VITE_LAMBDA_DELETE_DOC;
   const LAMBDA_ANALYTICS_URL = import.meta.env.VITE_LAMBDA_ANALYTICS;
+  const LAMBDA_GET_CONFIG_URL = import.meta.env.VITE_LAMBDA_GET_CONFIG;
 
   // --- GLOBAL STATS ---
   const [globalStats, setGlobalStats] = useState(0);
 
-  // Usar clientId del contexto de autenticación (soporta multi-client para agencias)
+  // Usar clientId del contexto de autenticación
   const { currentClientId, user, logout } = useAuth();
   const CLIENT_ID = currentClientId || 'test-client-123';
 
@@ -194,11 +194,9 @@ const MainApp = () => {
     };
 
     fetchGlobalStats();
-    const interval = setInterval(fetchGlobalStats, 30000); // Actualizar cada 30s
+    const interval = setInterval(fetchGlobalStats, 30000);
     return () => clearInterval(interval);
-  }, [CLIENT_ID]); // Added dependency
-
-  const LAMBDA_GET_CONFIG_URL = import.meta.env.VITE_LAMBDA_GET_CONFIG;
+  }, [CLIENT_ID]);
 
   // --- EFFECTS ---
   useEffect(() => {
@@ -208,7 +206,6 @@ const MainApp = () => {
         const response = await fetch(`${LAMBDA_GET_CONFIG_URL}?clientId=${CLIENT_ID}`);
         if (!response.ok) throw new Error(`Error de red: ${response.statusText}`);
         const data = await response.json();
-        // Merge with defaults to ensure all fields exist
         setConfig(prev => ({ ...prev, ...data }));
       } catch (error) {
         console.error("Error fatal al cargar la configuración:", error);
@@ -217,31 +214,36 @@ const MainApp = () => {
     fetchConfig();
   }, [CLIENT_ID]);
 
+  // --- FETCH DOCUMENTS FUNCTION (Extracted) ---
+  const fetchDocuments = async () => {
+    if (!CLIENT_ID) return;
+    setIsLoadingDocs(true);
+    try {
+      // Pasar channel para filtrar documentos por canal
+      const response = await fetch(`${LAMBDA_LIST_DOCS_URL}?clientId=${CLIENT_ID}&channel=web`);
+      if (!response.ok) throw new Error('No se pudo obtener la lista de documentos.');
+      const data = await response.json();
+      const formattedData = data.map(doc => ({
+        ...doc,
+        id: doc.fileName,
+        name: doc.fileName,
+        size: doc.fileSize ? formatBytes(doc.fileSize) : 'N/A',
+        type: doc.fileName.split('.').pop().toUpperCase(),
+        uploaded: new Date(doc.uploadedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
+      }));
+      setDocuments(formattedData);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoadingDocs(false);
+    }
+  };
+
+  // Effect to call fetchDocuments when activeSection changes to 'database'
   useEffect(() => {
-    const fetchDocuments = async () => {
-      if (!(activeSection === 'database')) return;
-      setIsLoadingDocs(true);
-      try {
-        // Pasar channel para filtrar documentos por canal
-        const response = await fetch(`${LAMBDA_LIST_DOCS_URL}?clientId=${CLIENT_ID}&channel=web`);
-        if (!response.ok) throw new Error('No se pudo obtener la lista de documentos.');
-        const data = await response.json();
-        const formattedData = data.map(doc => ({
-          ...doc,
-          id: doc.fileName,
-          name: doc.fileName,
-          size: doc.fileSize ? formatBytes(doc.fileSize) : 'N/A',
-          type: doc.fileName.split('.').pop().toUpperCase(),
-          uploaded: new Date(doc.uploadedAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' })
-        }));
-        setDocuments(formattedData);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsLoadingDocs(false);
-      }
-    };
-    fetchDocuments();
+    if (activeSection === 'database') {
+      fetchDocuments();
+    }
   }, [activeSection, CLIENT_ID]);
 
   // --- HANDLERS ---
@@ -313,8 +315,10 @@ const MainApp = () => {
       setTimeout(() => {
         setUploadStatus('');
         setUploadProgress({ current: 0, total: 0, fileName: '' });
+
+        // Refresh documents list if we are in the database section
         if (activeSection === 'database') {
-          // Refresh logic if needed
+          fetchDocuments();
         }
       }, 2000);
     }
