@@ -316,10 +316,7 @@ const MainApp = () => {
         setUploadStatus('');
         setUploadProgress({ current: 0, total: 0, fileName: '' });
 
-        // Refresh documents list if we are in the database section
-        if (activeSection === 'database') {
-          fetchDocuments();
-        }
+        fetchDocuments();
       }, 2000);
     }
   };
