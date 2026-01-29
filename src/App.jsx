@@ -317,7 +317,7 @@ const MainApp = () => {
         setUploadProgress({ current: 0, total: 0, fileName: '' });
 
         fetchDocuments();
-      }, 2000);
+      }, 4000);
     }
   };
 
