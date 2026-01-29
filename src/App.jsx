@@ -28,6 +28,9 @@ import WidgetCustomizer from './WidgetCustomizer';
 import AnalyticsPage from './AnalyticsPage';
 // import LeadsPage from './LeadsPage'; // REMOVED
 
+// Lazy load
+const LoginPage = lazy(() => import('./LoginPage'));
+
 // --- Utility Functions ---
 const formatBytes = (bytes, decimals = 2) => {
   if (bytes === 0) return '0 Bytes';
@@ -122,7 +125,7 @@ const EmptyStateDocuments = ({ onUpload }) => (
   </div>
 );
 
-// --- Main Component ---
+// --- Main App Inner Component ---
 const MainApp = () => {
   // --- STATE ---
   // Simplificado para Demo: Solo Web
@@ -693,4 +696,30 @@ const MainApp = () => {
   );
 };
 
-export default MainApp;
+// Protected Route wrapper
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  if (isLoading) return <div className="flex items-center justify-center h-screen bg-gray-900"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div></div>;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  return children;
+};
+
+// Main Export
+export default function App() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) return null;
+
+  return (
+    <Routes>
+      <Route path="/login" element={
+        isAuthenticated ? <Navigate to="/" replace /> : <LoginPage />
+      } />
+      <Route path="/*" element={
+        <ProtectedRoute>
+          <MainApp />
+        </ProtectedRoute>
+      } />
+    </Routes>
+  );
+}
