@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo de Chatbot Tecnológico</title>
+    <!-- Importamos la fuente 'Inter' para un look moderno -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Librería para renderizar Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        /* --- Estilos Generales --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #0d1117;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* --- Contenedor Principal del Widget --- */
+        .chat-widget {
+            width: 400px;
+            max-width: 100%;
+            height: 620px;
+            background: #161b22;
+            border-radius: 8px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid #30363d;
+        }
+
+        /* --- Cabecera del Chat --- */
+        .chat-header {
+            padding: 16px 20px;
+            background: #2c3242;
+            border-bottom: 1px solid #3a4153;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .chat-header .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(52, 96, 246, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #3460F6;
+        }
+
+        .chat-header .info .title {
+            font-weight: 600;
+            color: #ffffff;
+            font-size: 16px;
+        }
+
+        .chat-header .info .status {
+            font-size: 13px;
+            color: #00f0a0;
+            font-weight: 500;
+        }
+
+        /* --- Cuerpo del Chat (Mensajes) --- */
+        .chat-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #1a1f2c;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+        }
+
+        /* --- Estilo de Mensajes --- */
+        .message {
+            padding: 10px 14px;
+            border-radius: 12px;
+            max-width: 75%;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        /* Mensaje Recibido (Bot) */
+        .message.received {
+            background: #2c3242;
+            color: #e0e0e0;
+            align-self: flex-start;
+            border-top-left-radius: 4px;
+        }
+
+        /* Mensaje Enviado (Usuario) */
+        .message.sent {
+            background: #3460F6;
+            color: #ffffff;
+            align-self: flex-end;
+            border-top-right-radius: 4px;
+            box-shadow: 0 4px 15px rgba(52, 96, 246, 0.25);
+        }
+
+        /* --- Indicador de Escribiendo (Estilo Terminal) --- */
+        .typing-indicator {
+            align-self: flex-start;
+            background: #2c3242;
+            border: 1px solid #3a4153;
+            padding: 10px 14px;
+            border-radius: 4px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+            width: fit-content;
+        }
+
+        .typing-indicator.active {
+            display: flex;
+        }
+
+        .cursor {
+            width: 8px;
+            height: 16px;
+            background: #3460F6;
+            animation: blink 1s step-end infinite;
+        }
+
+        .text-typing {
+            font-size: 12px;
+            color: #e0e0e0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* --- Pie de Página (Input) --- */
+        .chat-footer {
+            padding: 14px 16px;
+            border-top: 1px solid #3a4153;
+            background: #2c3242;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-shrink: 0;
+        }
+
+        .chat-footer input {
+            flex: 1;
+            background: #1a1f2c;
+            border: 1px solid #3a4153;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .chat-footer input:focus {
+            border-color: #3460F6;
+            box-shadow: 0 0 0 3px rgba(52, 96, 246, 0.2);
+        }
+
+        .chat-footer button {
+            background: #3460F6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .chat-footer button:hover {
+            background: #2a50e0;
+            box-shadow: 0 0 10px rgba(52, 96, 246, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- El Widget de Chat -->
+    <div class="chat-widget">
+
+        <!-- Cabecera -->
+        <div class="chat-header">
+            <div class="avatar">
+                <!-- Icono de Bot (SVG) -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20.9a.9.9 0 0 1-.9-.9v-3.8a.9.9 0 0 1 .9-.9h0a.9.9 0 0 1 .9.9v3.8a.9.9 0 0 1-.9.9Z" />
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    <path d="M16 10.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v0a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5Z" />
+                    <path d="M16 7.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v0a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5Z" />
+                </svg>
+            </div>
+            <div class="info">
+                <div class="title">Asistente Tecnológico</div>
+                <div class="status">En línea</div>
+            </div>
+        </div>
+
+        <!-- Cuerpo de Mensajes -->
+        <div class="chat-body" id="chat-body">
+            <!-- Mensajes de ejemplo -->
+
+            <!-- Indicador de Escribiendo -->
+            <div class="typing-indicator" id="typing-indicator">
+                <span class="text-typing">PROCESANDO</span>
+                <div class="cursor"></div>
+            </div>
+        </div>
+
+        <!-- Pie de Página (Input) -->
+        <form class="chat-footer" id="chat-form">
+            <input type="text" id="message-input" placeholder="Escribir consulta..." autocomplete="off">
+            <button type="submit" aria-label="Enviar consulta">
+                <!-- Icono de Enviar (SVG) -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+            </button>
+        </form>
+    </div>
+
+    <script>
+        // --- Lógica de Chat Simple ---
+
+        const chatForm = document.getElementById('chat-form');
+        const messageInput = document.getElementById('message-input');
+        const chatBody = document.getElementById('chat-body');
+        const typingIndicator = document.getElementById('typing-indicator');
+
+        // Historial de conversación para el backend
+        let conversationHistory = [];
+
+        // Función para añadir un mensaje al chat
+        function agregarMensaje(texto, tipo) {
+            const mensajeEl = document.createElement('div');
+            mensajeEl.classList.add('message', tipo);
+
+            if (tipo === 'received') {
+                // Si es un mensaje del bot, renderizamos el Markdown a HTML
+                mensajeEl.innerHTML = marked.parse(texto || '');
+            } else {
+                // Si es del usuario, lo tratamos como texto plano
+                mensajeEl.textContent = texto;
+            }
+
+            // Insertar antes del indicador de typing
+            chatBody.insertBefore(mensajeEl, typingIndicator);
+
+            // Hacer scroll hasta abajo
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function showTyping() {
+            typingIndicator.classList.add('active');
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function hideTyping() {
+            typingIndicator.classList.remove('active');
+        }
+
+        // Simular un mensaje de bienvenida del bot al cargar
+        window.onload = () => {
+            setTimeout(() => {
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    const welcomeMsg = "Hola, soy tu asistente virtual con inteligencia artificial. ¿En qué puedo ayudarte hoy?";
+                    agregarMensaje(welcomeMsg, "received");
+                    // Añadir bienvenida al historial
+                    conversationHistory.push({ role: 'model', content: welcomeMsg });
+                }, 1000);
+            }, 500);
+        };
+
+        // Manejar el envío del formulario
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault(); // Evitar que la página se recargue
+
+            const textoMensaje = messageInput.value.trim();
+
+            if (textoMensaje) {
+                // Añadir el mensaje del usuario
+                agregarMensaje(textoMensaje, 'sent');
+
+                // Limpiar el input
+                messageInput.value = '';
+
+                // Mostrar typing
+                showTyping();
+
+                // Simular respuesta del bot
+                simularRespuestaBot(textoMensaje);
+            }
+        });
+
+        async function simularRespuestaBot(mensajeUsuario) {
+            const url = 'https://pdypyzvqrhkbu4kl2ff4d7u6za0ntffy.lambda-url.eu-west-1.on.aws/';
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        "clientId": "test-client-123",
+                        "query": mensajeUsuario,
+                        "history": conversationHistory
+                    })
+                });
+                const data = await response.json();
+                hideTyping();
+                agregarMensaje(data.response, 'received');
+
+                // Actualizar historial con la interacción completa
+                conversationHistory.push({ role: 'user', content: mensajeUsuario });
+                conversationHistory.push({ role: 'model', content: data.response });
+
+            } catch (error) {
+                console.error('Error al conectar con el backend:', error);
+                hideTyping();
+                agregarMensaje('Lo siento, estoy teniendo problemas para conectarme con el servidor.', 'received');
+            }
+        }
+    </script>
+</body>
+
+</html>
