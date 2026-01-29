@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import {
@@ -7,8 +7,7 @@ import {
 
 const WidgetCustomizer = ({ config, clientId }) => {
     // Hardcoded for Demo
-    const previewOpen = true; // Always open in test mode? Or allow toggle?
-    // Let's allow toggle but default open.
+    const previewOpen = true;
     const [isPreviewOpen, setIsPreviewOpen] = useState(true);
 
     // Real Chat State (Test Tab)
@@ -17,6 +16,10 @@ const WidgetCustomizer = ({ config, clientId }) => {
     const [isTyping, setIsTyping] = useState(false);
     const [conversationHistory, setConversationHistory] = useState([]);
     const [isRecording, setIsRecording] = useState(false);
+
+    // Refs for scrolling
+    const chatContainerRef = useRef(null);
+    const lastBotMessageRef = useRef(null);
 
     // Default values if config is missing properties
     const widgetConfig = {
@@ -39,6 +42,34 @@ const WidgetCustomizer = ({ config, clientId }) => {
         }
     }, [widgetConfig.welcomeMessage]);
 
+    // --- SCROLL LOGIC ---
+    useEffect(() => {
+        // If typing, always scroll to bottom to show the indicator
+        if (isTyping && chatContainerRef.current) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+            return;
+        }
+
+        const lastMsg = realMessages[realMessages.length - 1];
+        if (!lastMsg) return;
+
+        if (lastMsg.isUser) {
+            // User message: scroll to bottom
+            if (chatContainerRef.current) {
+                chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+            }
+        } else {
+            // Bot message: scroll to START of the message
+            // Small delay to ensure layout is complete
+            setTimeout(() => {
+                if (lastBotMessageRef.current) {
+                    lastBotMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            }, 50);
+        }
+    }, [realMessages, isTyping]);
+
+
     // Real Chat Logic
     const handleRealSendMessage = async (e) => {
         if ((e.key === 'Enter' || e.type === 'click') && realInputValue.trim()) {
@@ -51,8 +82,6 @@ const WidgetCustomizer = ({ config, clientId }) => {
 
             try {
                 // Determine API URL based on environment (simplification for demo)
-                // In production code this was hardcoded in the original file, I should probably reuse that or env.
-                // The original file had: 'https://pdypyzvqrhkbu4kl2ff4d7u6za0ntffy.lambda-url.eu-west-1.on.aws/'
                 const response = await fetch('https://pdypyzvqrhkbu4kl2ff4d7u6za0ntffy.lambda-url.eu-west-1.on.aws/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -156,39 +185,47 @@ const WidgetCustomizer = ({ config, clientId }) => {
 
                 {/* Widget Body */}
                 <div
-                    className="flex-1 p-4 overflow-y-auto space-y-4"
+                    ref={chatContainerRef}
+                    className="flex-1 p-4 overflow-y-auto space-y-4 scroll-smooth"
                     style={{ backgroundColor: widgetConfig.backgroundColor }}
                 >
-                    {realMessages.map((msg, idx) => (
-                        <div key={idx} className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}>
+                    {realMessages.map((msg, idx) => {
+                        const isLast = idx === realMessages.length - 1;
+                        return (
                             <div
-                                className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${msg.isUser ? 'rounded-tr-none text-white' : 'rounded-tl-none border border-gray-100'}`}
-                                style={{
-                                    backgroundColor: msg.isUser ? widgetConfig.primaryColor : '#f3f4f6',
-                                    color: msg.isUser ? '#ffffff' : '#1f2937'
-                                }}
+                                key={idx}
+                                ref={isLast && !msg.isUser ? lastBotMessageRef : null}
+                                className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}
                             >
-                                {msg.isUser ? (
-                                    msg.text
-                                ) : (
-                                    <ReactMarkdown
-                                        components={{
-                                            p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                                            strong: ({ children }) => <strong className="font-bold">{children}</strong>,
-                                            em: ({ children }) => <em className="italic">{children}</em>,
-                                            ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
-                                            ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
-                                            li: ({ children }) => <li>{children}</li>,
-                                            code: ({ children }) => <code className="bg-black/10 px-1 py-0.5 rounded text-xs font-mono">{children}</code>,
-                                            a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800" target="_blank" rel="noopener noreferrer">{children}</a>
-                                        }}
-                                    >
-                                        {msg.text}
-                                    </ReactMarkdown>
-                                )}
+                                <div
+                                    className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${msg.isUser ? 'rounded-tr-none text-white' : 'rounded-tl-none border border-gray-100'}`}
+                                    style={{
+                                        backgroundColor: msg.isUser ? widgetConfig.primaryColor : '#f3f4f6',
+                                        color: msg.isUser ? '#ffffff' : '#1f2937'
+                                    }}
+                                >
+                                    {msg.isUser ? (
+                                        msg.text
+                                    ) : (
+                                        <ReactMarkdown
+                                            components={{
+                                                p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                                                strong: ({ children }) => <strong className="font-bold">{children}</strong>,
+                                                em: ({ children }) => <em className="italic">{children}</em>,
+                                                ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
+                                                ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
+                                                li: ({ children }) => <li>{children}</li>,
+                                                code: ({ children }) => <code className="bg-black/10 px-1 py-0.5 rounded text-xs font-mono">{children}</code>,
+                                                a: ({ href, children }) => <a href={href} className="text-blue-600 underline hover:text-blue-800" target="_blank" rel="noopener noreferrer">{children}</a>
+                                            }}
+                                        >
+                                            {msg.text}
+                                        </ReactMarkdown>
+                                    )}
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                     {isTyping && (
                         <div className="flex justify-start">
                             <div className="bg-gray-100 p-3 rounded-2xl rounded-tl-none border border-gray-100 flex gap-1.5 items-center">
