@@ -13,7 +13,7 @@ const WidgetCustomizer = ({ config, clientId }) => {
     // However, if we remove ALL context, the floating icon over WHITE background might look weird. 
     // Let's make a clean, modern background for the "Probar Page" itself so the widget pops.
 
-    const [isPreviewOpen, setIsPreviewOpen] = useState(true);
+    const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
     // Real Chat State (Test Tab)
     const [realMessages, setRealMessages] = useState([]);
@@ -197,8 +197,8 @@ const WidgetCustomizer = ({ config, clientId }) => {
                             >
                                 <div
                                     className={`max-w-[85%] p-4 rounded-2xl text-[15px] leading-relaxed shadow-sm ${msg.isUser
-                                            ? 'bg-blue-600 text-white rounded-tr-sm'
-                                            : 'bg-blue-50/80 text-gray-800 rounded-tl-sm border border-blue-100/50'
+                                        ? 'bg-blue-600 text-white rounded-tr-sm'
+                                        : 'bg-blue-50/80 text-gray-800 rounded-tl-sm border border-blue-100/50'
                                         }`}
                                 >
                                     {msg.isUser ? (
