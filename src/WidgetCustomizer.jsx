@@ -63,8 +63,15 @@ const WidgetCustomizer = ({ config, clientId }) => {
             }
         } else {
             setTimeout(() => {
-                if (lastBotMessageRef.current) {
-                    lastBotMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+                if (lastBotMessageRef.current && chatContainerRef.current) {
+                    const container = chatContainerRef.current;
+                    const element = lastBotMessageRef.current;
+                    // Manual scroll on the container only to prevent page scrolling
+                    // -24 accounts for padding-top (p-5 is 20px, + space)
+                    container.scrollTo({
+                        top: element.offsetTop - 24,
+                        behavior: 'smooth'
+                    });
                 }
             }, 50);
         }
@@ -185,7 +192,7 @@ const WidgetCustomizer = ({ config, clientId }) => {
                 {/* Widget Body */}
                 <div
                     ref={chatContainerRef}
-                    className="flex-1 p-5 overflow-y-auto space-y-5 scroll-smooth bg-gray-50/50"
+                    className="flex-1 p-5 overflow-y-auto space-y-5 scroll-smooth bg-gray-50/50 relative"
                 >
                     {realMessages.map((msg, idx) => {
                         const isLast = idx === realMessages.length - 1;
