@@ -23,27 +23,39 @@ const ClientSelector = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // No mostrar si no es agencia o no hay clientes (excepto si es demo user 'hola', que queremos forzar mostrarlo si tiene managedClients, aunque el original ya lo hace)
-    if (!isAgency || managedClients.length === 0) {
+    // Mock clients for demo user if none exist
+    const demoClients = [
+        { clientId: '1', name: 'Restaurante El Buen Sabor' },
+        { clientId: '2', name: 'Clínica Dental Sonrisas' },
+        { clientId: '3', name: 'Gimnasio PowerFit' }
+    ];
+
+    const clientsToDisplay = (isDemoUser && managedClients.length === 0) ? demoClients : managedClients;
+
+    // No mostrar si no es agencia o no hay clientes (excepto si es demo user 'hola')
+    if (!isAgency && !isDemoUser && clientsToDisplay.length === 0) {
         return null;
     }
+
+    // Force display for demo user even if not agency check fails normally
+    if (clientsToDisplay.length === 0 && !isDemoUser) return null;
 
     return (
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className={cn(
-                    "flex items-center gap-2 px-3 py-2 rounded-lg transition-all",
-                    "bg-muted/50 hover:bg-muted border border-border/50",
-                    "text-sm font-medium"
+                    "flex items-center gap-2 px-4 py-2 rounded-lg transition-all",
+                    "bg-[#1e293b] hover:bg-[#334155] border border-transparent shadow-sm", // Dark slate bg like screenshot
+                    "text-sm font-medium text-white"
                 )}
             >
-                <Building2 className="h-4 w-4 text-primary" />
+                <Building2 className="h-4 w-4 text-blue-400" />
                 <span className="max-w-[200px] truncate">
-                    {selectedClient?.name || 'Seleccionar cliente'}
+                    {selectedClient?.name || (isDemoUser ? 'Restaurante El Buen Sabor' : 'Seleccionar cliente')}
                 </span>
                 <ChevronDown className={cn(
-                    "h-4 w-4 text-muted-foreground transition-transform",
+                    "h-4 w-4 text-gray-400 transition-transform",
                     isOpen && "rotate-180"
                 )} />
             </button>
@@ -55,15 +67,15 @@ const ClientSelector = () => {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: -10, scale: 0.95 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute top-full right-0 mt-2 w-72 bg-card border border-border rounded-xl shadow-xl z-50 overflow-hidden"
+                        className="absolute top-full right-0 mt-2 w-72 bg-white dark:bg-slate-800 border border-border rounded-xl shadow-xl z-50 overflow-hidden"
                     >
-                        <div className="p-2 border-b border-border/50">
+                        <div className="p-2 border-b border-gray-100 dark:border-gray-700">
                             <p className="text-xs text-muted-foreground px-2">
-                                {managedClients.length} cliente{managedClients.length !== 1 ? 's' : ''} gestionado{managedClients.length !== 1 ? 's' : ''}
+                                {clientsToDisplay.length} cliente{clientsToDisplay.length !== 1 ? 's' : ''} gestionado{clientsToDisplay.length !== 1 ? 's' : ''}
                             </p>
                         </div>
                         <div className="max-h-64 overflow-y-auto p-1">
-                            {managedClients.map((client) => (
+                            {clientsToDisplay.map((client) => (
                                 <button
                                     key={client.clientId}
                                     onClick={() => {
@@ -75,11 +87,11 @@ const ClientSelector = () => {
                                         "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all",
                                         selectedClient?.clientId === client.clientId
                                             ? "bg-primary/10 text-primary"
-                                            : isDemoUser ? "cursor-default text-foreground" : "hover:bg-muted text-foreground" // Remove hover effect if demo? Or keep it for visual? Let's keep hover but it does nothing.
+                                            : isDemoUser ? "cursor-default text-gray-700 dark:text-gray-200 hover:bg-transparent" : "hover:bg-muted text-foreground"
                                     )}
                                 >
-                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center">
-                                        <span className="text-xs font-bold text-primary">
+                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                                        <span className="text-xs font-bold text-blue-600">
                                             {client.name?.charAt(0)?.toUpperCase() || 'C'}
                                         </span>
                                     </div>
