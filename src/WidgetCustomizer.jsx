@@ -6,8 +6,13 @@ import {
 } from 'lucide-react';
 
 const WidgetCustomizer = ({ config, clientId }) => {
-    // Hardcoded for Demo
-    const previewOpen = true;
+    // Hardcoded for Demo: Always open, no toggle button visible (or maybe just open by default and fixed)
+    // The user wants "quita todo lo que hay y que solo esté el chatbot". 
+    // And "que siga siendo de icono flotante y que se abre". 
+    // So we will keep the floating logic but maybe present it better on the page.
+    // However, if we remove ALL context, the floating icon over WHITE background might look weird. 
+    // Let's make a clean, modern background for the "Probar Page" itself so the widget pops.
+
     const [isPreviewOpen, setIsPreviewOpen] = useState(true);
 
     // Real Chat State (Test Tab)
@@ -21,17 +26,17 @@ const WidgetCustomizer = ({ config, clientId }) => {
     const chatContainerRef = useRef(null);
     const lastBotMessageRef = useRef(null);
 
-    // Default values if config is missing properties
+    // Widget Configuration - PymerIA Defaults
     const widgetConfig = {
-        primaryColor: config.primaryColor || '#3460F6',
-        backgroundColor: config.backgroundColor || '#ffffff',
-        textColor: config.textColor || '#1f2937',
-        position: config.position || 'bottom-right',
-        welcomeMessage: config.welcomeMessage || '¡Hola! ¿En qué puedo ayudarte hoy?',
-        displayName: config.displayName || 'Asistente Virtual',
-        logoUrl: config.logoUrl || '',
-        ctaText: config.ctaText || '',
-        voiceInput: config.voiceInput !== undefined ? config.voiceInput : true,
+        primaryColor: '#1E40AF', // Strong Blue (Cobalt/Royal Blue approx)
+        backgroundColor: '#ffffff',
+        textColor: '#1f2937',
+        position: 'bottom-right',
+        welcomeMessage: '¡Hola! 👋 ¿Qué tareas repetitivas te quitan más tiempo cada día?', // Matching image text roughly
+        displayName: 'PymerIA',
+        logoUrl: '', // We will implement the custom logo icon in code as per image
+        ctaText: '',
+        voiceInput: true,
     };
 
     // Initialize real chat
@@ -44,7 +49,6 @@ const WidgetCustomizer = ({ config, clientId }) => {
 
     // --- SCROLL LOGIC ---
     useEffect(() => {
-        // If typing, always scroll to bottom to show the indicator
         if (isTyping && chatContainerRef.current) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
             return;
@@ -54,13 +58,10 @@ const WidgetCustomizer = ({ config, clientId }) => {
         if (!lastMsg) return;
 
         if (lastMsg.isUser) {
-            // User message: scroll to bottom
             if (chatContainerRef.current) {
                 chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
             }
         } else {
-            // Bot message: scroll to START of the message
-            // Small delay to ensure layout is complete
             setTimeout(() => {
                 if (lastBotMessageRef.current) {
                     lastBotMessageRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -81,7 +82,7 @@ const WidgetCustomizer = ({ config, clientId }) => {
             setIsTyping(true);
 
             try {
-                // Determine API URL based on environment (simplification for demo)
+                // Production URL or Env Var
                 const response = await fetch('https://pdypyzvqrhkbu4kl2ff4d7u6za0ntffy.lambda-url.eu-west-1.on.aws/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -153,31 +154,29 @@ const WidgetCustomizer = ({ config, clientId }) => {
                 initial={{ opacity: 0, y: 20, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 20, scale: 0.9 }}
-                className={`absolute ${widgetConfig.position === 'bottom-right' ? 'right-6' : 'left-6'} bottom-24 w-[350px] h-[450px] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col border border-gray-200 z-40`}
+                className={`fixed sm:absolute bottom-6 sm:bottom-24 right-6 sm:right-6 w-[90vw] sm:w-[380px] h-[550px] bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-border/50 z-40`}
                 style={{ fontFamily: 'Inter, sans-serif' }}
             >
-                {/* Widget Header */}
-                <div
-                    className="p-4 flex items-center justify-between text-white"
-                    style={{ backgroundColor: widgetConfig.primaryColor }}
-                >
+                {/* Widget Header - Custom PymerIA Style */}
+                <div className="p-5 flex items-center justify-between bg-white border-b border-gray-100">
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm overflow-hidden">
-                            {widgetConfig.logoUrl ? (
-                                <img src={widgetConfig.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-                            ) : (
-                                <MessageSquare size={18} />
-                            )}
+                        {/* Custom Icon Circle */}
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-white shadow-md relative overflow-hidden"
+                            style={{ backgroundColor: widgetConfig.primaryColor }}>
+                            {/* Simplified speech bubble icon */}
+                            <MessageSquare size={20} fill="white" className="relative z-10" />
                         </div>
                         <div>
-                            <h3 className="font-semibold text-sm">{widgetConfig.displayName}</h3>
-                            <p className="text-xs opacity-80">En línea</p>
+                            <h3 className="font-bold text-lg text-gray-900 tracking-tight">{widgetConfig.displayName}</h3>
+                            {/* <p className="text-xs text-green-500 font-medium flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> En línea
+                            </p> */}
                         </div>
                     </div>
                     {/* Close button */}
                     <button
                         onClick={() => setIsPreviewOpen(false)}
-                        className="opacity-80 hover:opacity-100 transition-opacity"
+                        className="text-gray-400 hover:text-gray-600 transition-colors bg-gray-50 p-1.5 rounded-full"
                     >
                         <X size={18} />
                     </button>
@@ -186,8 +185,7 @@ const WidgetCustomizer = ({ config, clientId }) => {
                 {/* Widget Body */}
                 <div
                     ref={chatContainerRef}
-                    className="flex-1 p-4 overflow-y-auto space-y-4 scroll-smooth"
-                    style={{ backgroundColor: widgetConfig.backgroundColor }}
+                    className="flex-1 p-5 overflow-y-auto space-y-5 scroll-smooth bg-gray-50/50"
                 >
                     {realMessages.map((msg, idx) => {
                         const isLast = idx === realMessages.length - 1;
@@ -198,11 +196,10 @@ const WidgetCustomizer = ({ config, clientId }) => {
                                 className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}
                             >
                                 <div
-                                    className={`max-w-[80%] p-3 rounded-2xl text-sm shadow-sm ${msg.isUser ? 'rounded-tr-none text-white' : 'rounded-tl-none border border-gray-100'}`}
-                                    style={{
-                                        backgroundColor: msg.isUser ? widgetConfig.primaryColor : '#f3f4f6',
-                                        color: msg.isUser ? '#ffffff' : '#1f2937'
-                                    }}
+                                    className={`max-w-[85%] p-4 rounded-2xl text-[15px] leading-relaxed shadow-sm ${msg.isUser
+                                            ? 'bg-blue-600 text-white rounded-tr-sm'
+                                            : 'bg-blue-50/80 text-gray-800 rounded-tl-sm border border-blue-100/50'
+                                        }`}
                                 >
                                     {msg.isUser ? (
                                         msg.text
@@ -228,7 +225,7 @@ const WidgetCustomizer = ({ config, clientId }) => {
                     })}
                     {isTyping && (
                         <div className="flex justify-start">
-                            <div className="bg-gray-100 p-3 rounded-2xl rounded-tl-none border border-gray-100 flex gap-1.5 items-center">
+                            <div className="bg-gray-100/50 p-4 rounded-2xl rounded-tl-sm border border-gray-100 flex gap-1.5 items-center">
                                 {[0, 1, 2].map((i) => (
                                     <motion.div
                                         key={i}
@@ -245,101 +242,96 @@ const WidgetCustomizer = ({ config, clientId }) => {
                             </div>
                         </div>
                     )}
+                    {/* Invisible spacer for scroll */}
+                    <div className="h-2"></div>
                 </div>
 
-                {/* Widget Input Area */}
-                <div className="p-3 border-t border-gray-100 bg-white flex items-center gap-2">
-                    <input
-                        type="text"
-                        value={realInputValue}
-                        onChange={(e) => setRealInputValue(e.target.value)}
-                        onKeyDown={handleRealSendMessage}
-                        placeholder="Escribe un mensaje..."
-                        disabled={isRecording}
-                        className="flex-1 bg-gray-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-opacity-50 text-gray-800"
-                        style={{ '--tw-ring-color': widgetConfig.primaryColor }}
-                    />
-                    {widgetConfig.voiceInput && (
+                {/* Widget Input Area - PymerIA Style */}
+                <div className="p-4 bg-white border-t border-gray-100">
+                    <div className="flex items-center gap-2 relative">
+                        <input
+                            type="text"
+                            value={realInputValue}
+                            onChange={(e) => setRealInputValue(e.target.value)}
+                            onKeyDown={handleRealSendMessage}
+                            placeholder="Escribe tu mensaje..."
+                            disabled={isRecording}
+                            className="flex-1 bg-white border-2 border-gray-100 rounded-xl px-4 py-3 text-[15px] focus:outline-none focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10 text-gray-800 transition-all placeholder:text-gray-400"
+                        />
+
+                        {widgetConfig.voiceInput && !realInputValue && (
+                            <button
+                                onClick={handleVoiceInput}
+                                className={`absolute right-14 top-1/2 -translate-y-1/2 p-2 text-gray-400 hover:text-gray-600 transition-colors ${isRecording ? 'text-red-500 animate-pulse' : ''}`}
+                            >
+                                <Mic size={20} />
+                            </button>
+                        )}
+
                         <button
-                            onClick={handleVoiceInput}
-                            className={`p-2 transition-colors ${isRecording
-                                ? 'text-red-500 animate-pulse'
-                                : 'text-gray-600 hover:text-gray-800'
-                                }`}
+                            onClick={handleRealSendMessage}
+                            className={`p-3 rounded-xl text-white shadow-lg shadow-blue-500/30 transition-all hover:shadow-blue-500/40 hover:scale-[1.02] active:scale-95 flex items-center justify-center`}
+                            style={{ backgroundColor: widgetConfig.primaryColor }}
                         >
-                            <Mic size={20} />
+                            <Send size={20} />
                         </button>
-                    )}
-                    <button
-                        onClick={handleRealSendMessage}
-                        className="p-2 rounded-full text-white transition-opacity hover:opacity-90"
-                        style={{ backgroundColor: widgetConfig.primaryColor }}
-                    >
-                        <Send size={18} />
-                    </button>
+                    </div>
+                    {/* Small branding footer */}
+                    {/* <div className="text-center mt-2">
+                        <span className="text-[10px] text-gray-300 font-medium">Powered by PymerIA</span>
+                    </div> */}
                 </div>
             </motion.div>
         );
     };
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-140px)]">
-            {/* Left Panel: Info Only */}
-            <div className="bg-[#161b22] border border-[#30363d] rounded-xl overflow-hidden flex flex-col">
-                <div className="p-4 border-b border-[#30363d] bg-[#0d1117]/50">
-                    <h3 className="text-white font-medium flex items-center gap-2"><MessageSquare size={16} /> Chat de Prueba</h3>
-                </div>
+        <div className="relative h-[calc(100vh-140px)] w-full overflow-hidden bg-slate-50/50 flex flex-col items-center justify-center">
+            {/* Background Elements to make it look 'premium' without images */}
 
-                <div className="flex-1 p-6 space-y-6 flex flex-col items-center justify-center text-center">
-                    <div className="p-6 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-200 w-full max-w-md">
-                        <h3 className="text-lg font-semibold mb-2 flex items-center justify-center gap-2">
-                            <Sparkles className="text-yellow-400" size={20} /> Entorno de Pruebas
-                        </h3>
-                        <p className="text-sm mb-4">
-                            Aquí puedes interactuar con tu chatbot en tiempo real. Utiliza tu configuración actual y conecta con tu base de conocimientos.
-                        </p>
-                        <div className="flex gap-2 flex-wrap justify-center">
-                            <div className="px-3 py-1 bg-blue-500/20 rounded-full text-xs font-mono">Client ID: {clientId}</div>
-                            <div className="px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-mono">Estado: Conectado</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            {/* CLEAN BACKGROUND */}
+            {/* <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-blue-50/30"></div> */}
 
-            {/* Right Panel: Live Preview */}
-            <div className="bg-[#0d1117] rounded-xl border border-[#30363d] relative overflow-hidden flex flex-col bg-[url('https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=2070&auto=format&fit=crop')] bg-cover bg-center">
-                <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+            {/* If the user wants "only the chatbot", maybe we center the chat bubble launcher? 
+                Or we just show the background and the floating launcher in the corner as usual.
+                Let's stick to floating launcher in corner, but empty clean background.
+            */}
 
-                {/* Mock Website Content - Fixed at top */}
-                <div className="relative z-10 text-center space-y-2 pt-8 pb-4 px-8">
-                    <h2 className="text-3xl font-bold text-white drop-shadow-2xl">Tu Sitio Web</h2>
-                    <p className="text-gray-200 drop-shadow-lg text-sm">
-                        Modo de Prueba: Interactúa con el widget real.
-                    </p>
-                </div>
-
-                {/* The Widget Preview */}
-                <AnimatePresence>
-                    {isPreviewOpen && renderWidgetUI()}
-                </AnimatePresence>
-
-                {/* Toggle Button (Launcher) */}
-                <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => setIsPreviewOpen(!isPreviewOpen)}
-                    className={`absolute ${widgetConfig.position === 'bottom-right' ? 'right-6' : 'left-6'} bottom-6 w-14 h-14 rounded-full shadow-lg flex items-center justify-center text-white z-20`}
-                    style={{ backgroundColor: widgetConfig.primaryColor }}
+            {/* Text Hint */}
+            {!isPreviewOpen && (
+                <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="text-center space-y-4"
                 >
-                    {isPreviewOpen ? <X size={24} /> : (
-                        widgetConfig.logoUrl ? (
-                            <img src={widgetConfig.logoUrl} alt="Logo" className="w-8 h-8 object-contain rounded-full" />
-                        ) : (
-                            <MessageSquare size={24} />
-                        )
-                    )}
-                </motion.button>
-            </div>
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-blue-100 text-blue-600 mb-4 animate-bounce">
+                        <MessageSquare size={32} />
+                    </div>
+                    <h2 className="text-2xl font-bold text-slate-800">Demo Interactiva</h2>
+                    <p className="text-slate-500 max-w-md mx-auto">
+                        Haz clic en el icono flotante de la esquina inferior derecha para probar <span className="font-bold text-blue-600">PymerIA</span>.
+                    </p>
+                </motion.div>
+            )}
+
+            {/* Launcher Button */}
+            <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                onClick={() => setIsPreviewOpen(!isPreviewOpen)}
+                className={`absolute bottom-8 right-8 w-16 h-16 rounded-full shadow-2xl shadow-blue-600/30 flex items-center justify-center text-white z-50 transition-transform`}
+                style={{ backgroundColor: widgetConfig.primaryColor }}
+            >
+                {isPreviewOpen ? <X size={28} /> : (
+                    <MessageSquare size={28} fill="white" />
+                )}
+            </motion.button>
+
+            {/* The Widget Popup */}
+            <AnimatePresence>
+                {isPreviewOpen && renderWidgetUI()}
+            </AnimatePresence>
+
         </div>
     );
 };

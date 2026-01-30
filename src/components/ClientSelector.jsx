@@ -5,9 +5,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { cn } from '../lib/utils';
 
 const ClientSelector = () => {
-    const { managedClients, selectedClient, selectClient, isAgency } = useAuth();
+    const { managedClients, selectedClient, selectClient, isAgency, user } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
+
+    // Demo user check
+    const isDemoUser = user?.username === 'hola';
 
     // Cerrar dropdown al hacer clic fuera
     useEffect(() => {
@@ -20,7 +23,7 @@ const ClientSelector = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // No mostrar si no es agencia o no hay clientes
+    // No mostrar si no es agencia o no hay clientes (excepto si es demo user 'hola', que queremos forzar mostrarlo si tiene managedClients, aunque el original ya lo hace)
     if (!isAgency || managedClients.length === 0) {
         return null;
     }
@@ -64,6 +67,7 @@ const ClientSelector = () => {
                                 <button
                                     key={client.clientId}
                                     onClick={() => {
+                                        if (isDemoUser) return; // Disable selection for demo user
                                         selectClient(client);
                                         setIsOpen(false);
                                     }}
@@ -71,7 +75,7 @@ const ClientSelector = () => {
                                         "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all",
                                         selectedClient?.clientId === client.clientId
                                             ? "bg-primary/10 text-primary"
-                                            : "hover:bg-muted text-foreground"
+                                            : isDemoUser ? "cursor-default text-foreground" : "hover:bg-muted text-foreground" // Remove hover effect if demo? Or keep it for visual? Let's keep hover but it does nothing.
                                     )}
                                 >
                                     <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center">
