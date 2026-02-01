@@ -105,7 +105,7 @@ const ClientSelector = () => {
                                             "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all",
                                             isSelected
                                                 ? "bg-primary/10 text-primary"
-                                                : "hover:bg-muted text-gray-700 dark:text-gray-200"
+                                                : "hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white"
                                         )}
                                     >
                                         <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
