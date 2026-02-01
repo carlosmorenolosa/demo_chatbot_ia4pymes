@@ -561,7 +561,7 @@ const MainApp = () => {
                           <Upload className="h-10 w-10 text-primary" />
                         </div>
                         <h3 className="text-xl font-semibold mb-2">Sube tus documentos</h3>
-                        <p className="text-sm text-muted-foreground max-w-sm mb-8">
+                        <p className="text-sm text-muted-foreground max-w-sm mb-8 font-bold">
                           Arrastra y suelta archivos PDF o DOCX aquí para entrenar a tu IA.
                         </p>
                         <input
