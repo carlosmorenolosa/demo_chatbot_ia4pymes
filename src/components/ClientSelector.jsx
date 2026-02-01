@@ -32,6 +32,11 @@ const ClientSelector = () => {
 
     const clientsToDisplay = (isDemoUser && managedClients.length === 0) ? demoClients : managedClients;
 
+    // State for demo user visual selection
+    const [demoSelectedClient, setDemoSelectedClient] = useState(
+        isDemoUser ? { clientId: '1', name: 'Restaurante El Buen Sabor' } : null
+    );
+
     // No mostrar si no es agencia o no hay clientes (excepto si es demo user 'hola')
     if (!isAgency && !isDemoUser && clientsToDisplay.length === 0) {
         return null;
@@ -39,6 +44,14 @@ const ClientSelector = () => {
 
     // Force display for demo user even if not agency check fails normally
     if (clientsToDisplay.length === 0 && !isDemoUser) return null;
+
+    // Helper to check if a client is selected (either real or demo)
+    const isClientSelected = (client) => {
+        if (isDemoUser) {
+            return demoSelectedClient?.clientId === client.clientId;
+        }
+        return selectedClient?.clientId === client.clientId;
+    };
 
     return (
         <div className="relative" ref={dropdownRef}>
@@ -52,7 +65,7 @@ const ClientSelector = () => {
             >
                 <Building2 className="h-4 w-4 text-blue-400" />
                 <span className="max-w-[200px] truncate">
-                    {selectedClient?.name || (isDemoUser ? 'Restaurante El Buen Sabor' : 'Seleccionar cliente')}
+                    {isDemoUser ? (demoSelectedClient?.name || 'Seleccionar cliente') : (selectedClient?.name || 'Seleccionar cliente')}
                 </span>
                 <ChevronDown className={cn(
                     "h-4 w-4 text-gray-400 transition-transform",
@@ -75,34 +88,40 @@ const ClientSelector = () => {
                             </p>
                         </div>
                         <div className="max-h-64 overflow-y-auto p-1">
-                            {clientsToDisplay.map((client) => (
-                                <button
-                                    key={client.clientId}
-                                    onClick={() => {
-                                        if (isDemoUser) return; // Disable selection for demo user
-                                        selectClient(client);
-                                        setIsOpen(false);
-                                    }}
-                                    className={cn(
-                                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all",
-                                        selectedClient?.clientId === client.clientId
-                                            ? "bg-primary/10 text-primary"
-                                            : isDemoUser ? "cursor-default text-gray-700 dark:text-gray-200 hover:bg-transparent" : "hover:bg-muted text-foreground"
-                                    )}
-                                >
-                                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
-                                        <span className="text-xs font-bold text-blue-600">
-                                            {client.name?.charAt(0)?.toUpperCase() || 'C'}
-                                        </span>
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium truncate">{client.name}</p>
-                                    </div>
-                                    {selectedClient?.clientId === client.clientId && (
-                                        <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                                    )}
-                                </button>
-                            ))}
+                            {clientsToDisplay.map((client) => {
+                                const isSelected = isClientSelected(client);
+                                return (
+                                    <button
+                                        key={client.clientId}
+                                        onClick={() => {
+                                            if (isDemoUser) {
+                                                setDemoSelectedClient(client); // Visual update only
+                                            } else {
+                                                selectClient(client); // Real update
+                                            }
+                                            setIsOpen(false);
+                                        }}
+                                        className={cn(
+                                            "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all",
+                                            isSelected
+                                                ? "bg-primary/10 text-primary"
+                                                : "hover:bg-muted text-foreground"
+                                        )}
+                                    >
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center">
+                                            <span className="text-xs font-bold text-blue-600">
+                                                {client.name?.charAt(0)?.toUpperCase() || 'C'}
+                                            </span>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium truncate">{client.name}</p>
+                                        </div>
+                                        {isSelected && (
+                                            <Check className="h-4 w-4 text-primary flex-shrink-0" />
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </motion.div>
                 )}

@@ -509,7 +509,7 @@ const MainApp = () => {
                             name="prompt"
                             value={config.prompt}
                             onChange={handleConfigChange}
-                            className="min-h-[150px] font-mono text-sm bg-background/50"
+                            className="min-h-[150px] text-sm bg-background/50"
                           />
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

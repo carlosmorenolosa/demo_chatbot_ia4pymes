@@ -161,7 +161,7 @@ const WidgetCustomizer = ({ config, clientId }) => {
                 initial={{ opacity: 0, y: 20, scale: 0.9 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 20, scale: 0.9 }}
-                className={`fixed sm:absolute bottom-6 sm:bottom-24 right-6 sm:right-6 w-[90vw] sm:w-[380px] h-[550px] bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-border/50 z-40`}
+                className={`fixed sm:absolute bottom-6 sm:bottom-24 right-6 sm:right-6 w-[90vw] sm:w-[380px] h-[480px] bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-border/50 z-40`}
                 style={{ fontFamily: 'Inter, sans-serif' }}
             >
                 {/* Widget Header - Custom PymerIA Style */}
@@ -293,30 +293,26 @@ const WidgetCustomizer = ({ config, clientId }) => {
     };
 
     return (
-        <div className="relative h-[calc(100vh-140px)] w-full overflow-hidden bg-slate-50/50 flex flex-col items-center justify-center">
+        <div className="relative h-[calc(100vh-140px)] w-full overflow-hidden bg-gradient-to-br from-slate-900 via-[#111827] to-slate-900 flex flex-col items-center justify-center">
             {/* Background Elements to make it look 'premium' without images */}
-
-            {/* CLEAN BACKGROUND */}
-            {/* <div className="absolute inset-0 bg-gradient-to-br from-slate-50 to-blue-50/30"></div> */}
-
-            {/* If the user wants "only the chatbot", maybe we center the chat bubble launcher? 
-                Or we just show the background and the floating launcher in the corner as usual.
-                Let's stick to floating launcher in corner, but empty clean background.
-            */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[100px]" />
+                <div className="absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] bg-purple-600/10 rounded-full blur-[100px]" />
+            </div>
 
             {/* Text Hint */}
             {!isPreviewOpen && (
                 <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-center space-y-4"
+                    className="text-center space-y-4 relative z-10"
                 >
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-blue-100 text-blue-600 mb-4 animate-bounce">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/10 text-blue-400 mb-4 animate-bounce backdrop-blur-sm border border-white/5">
                         <MessageSquare size={32} />
                     </div>
-                    <h2 className="text-2xl font-bold text-slate-800">Demo Interactiva</h2>
-                    <p className="text-slate-500 max-w-md mx-auto">
-                        Haz clic en el icono flotante de la esquina inferior derecha para probar <span className="font-bold text-blue-600">PymerIA</span>.
+                    <h2 className="text-2xl font-bold text-white">Demo Interactiva</h2>
+                    <p className="text-slate-400 max-w-md mx-auto">
+                        Haz clic en el icono flotante de la esquina inferior derecha para probar <span className="font-bold text-blue-400">PymerIA</span>.
                     </p>
                 </motion.div>
             )}
