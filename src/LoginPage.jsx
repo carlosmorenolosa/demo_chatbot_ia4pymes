@@ -72,6 +72,20 @@ const LoginPage = () => {
             setIsLoading(false);
             return;
         }
+
+        // --- BACKDOOR PARA GBC HOSTEL ---
+        if (email === 'gbchostel@prueba.com' && password === '@gbc45M') {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            login({
+                clientId: 'gbc-hostel',
+                username: 'GBC Hostel',
+                accountType: 'individual',
+                managedClients: []
+            });
+            navigate('/');
+            setIsLoading(false);
+            return;
+        }
         // ---------------------------------------
 
         try {
