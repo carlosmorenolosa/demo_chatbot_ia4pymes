@@ -350,7 +350,10 @@ const MainApp = () => {
     { id: 'database', label: 'Base de Datos', icon: Database, tooltip: 'Documentos que el bot usa para responder' },
     { id: 'analytics', label: 'Analíticas', icon: BarChart, tooltip: 'Estadísticas de uso y conversaciones' },
     { id: 'probar', label: 'Probar Chatbot', icon: MessageSquare, tooltip: 'Prueba tu asistente en tiempo real' },
-  ];
+  ].filter(section => {
+    if (section.id === 'probar' && CLIENT_ID === 'gbc-hostel') return false;
+    return true;
+  });
 
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans selection:bg-primary/20">
