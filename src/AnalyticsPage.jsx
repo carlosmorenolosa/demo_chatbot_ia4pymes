@@ -428,20 +428,19 @@ const AnalyticsPage = ({ clientId, channel = 'web', highlightConversationId = nu
 
                 {/* VISTA HISTORIAL */}
                 {activeTab === 'historial' && (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-auto lg:h-[600px]">
                         {/* Lista de Conversaciones */}
-                        <div className={`${GLASS_PANEL} rounded-xl overflow-hidden flex flex-col`}>
+                        <div className={`${GLASS_PANEL} rounded-xl overflow-hidden flex flex-col h-[500px] lg:h-full ${selectedConversation ? 'hidden lg:flex' : 'flex'}`}>
                             <div className="p-4 border-b border-white/10 bg-black/20 space-y-3">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="font-semibold text-lg">Conversaciones Recientes</h3>
+                                    <h3 className="font-semibold text-lg">Conversaciones</h3>
                                     <button
                                         onClick={exportToExcel}
                                         disabled={historyData.length === 0}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600/20 hover:bg-green-600/30 text-green-400 rounded-lg text-xs font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                        title="Exportar a Excel"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600/20 hover:bg-green-600/30 text-green-400 rounded-lg text-xs font-medium transition-all"
                                     >
                                         <Download size={14} />
-                                        Exportar
+                                        <span className="hidden sm:inline">Exportar</span>
                                     </button>
                                 </div>
                                 {/* Buscador */}
@@ -449,46 +448,30 @@ const AnalyticsPage = ({ clientId, channel = 'web', highlightConversationId = nu
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
                                     <input
                                         type="text"
-                                        placeholder="Buscar conversaciones..."
+                                        placeholder="Buscar..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-10 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/30 transition-all"
+                                        className="w-full bg-white/5 border border-white/10 rounded-lg pl-10 pr-10 py-2 text-sm text-white focus:outline-none focus:border-blue-500/50"
                                     />
-                                    {searchQuery && (
-                                        <button
-                                            onClick={() => setSearchQuery('')}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    )}
                                 </div>
-                                {/* Filtro de fechas */}
-                                <div className="flex gap-2 items-end">
-                                    <div className="flex-1">
-                                        <label className="text-xs text-gray-500 block mb-1">Desde</label>
+                                {/* Filtro de fechas - Colapso en móvil */}
+                                <div className="flex gap-2 items-center">
+                                    <div className="flex-1 flex gap-2">
                                         <input
                                             type="date"
                                             value={dateFilter.from}
                                             onChange={(e) => setDateFilter(prev => ({ ...prev, from: e.target.value }))}
-                                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500/50 transition-all"
+                                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] text-white"
                                         />
-                                    </div>
-                                    <div className="flex-1">
-                                        <label className="text-xs text-gray-500 block mb-1">Hasta</label>
                                         <input
                                             type="date"
                                             value={dateFilter.to}
                                             onChange={(e) => setDateFilter(prev => ({ ...prev, to: e.target.value }))}
-                                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500/50 transition-all"
+                                            className="w-full bg-white/5 border border-white/10 rounded-lg px-2 py-1.5 text-[10px] text-white"
                                         />
                                     </div>
                                     {(dateFilter.from || dateFilter.to) && (
-                                        <button
-                                            onClick={() => setDateFilter({ from: '', to: '' })}
-                                            className="px-2 py-1.5 text-xs text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all"
-                                            title="Limpiar filtro"
-                                        >
+                                        <button onClick={() => setDateFilter({ from: '', to: '' })} className="p-1.5 text-gray-400 hover:text-white">
                                             <X size={14} />
                                         </button>
                                     )}
@@ -496,143 +479,71 @@ const AnalyticsPage = ({ clientId, channel = 'web', highlightConversationId = nu
                             </div>
                             <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
                                 {historyLoading ? (
-                                    <div className="text-center py-8 text-gray-500">Cargando historial...</div>
-                                ) : historyError ? (
-                                    <div className="text-center py-8 text-red-400 text-sm px-4">
-                                        Error al cargar historial
-                                    </div>
+                                    <div className="text-center py-8 text-gray-500">Cargando...</div>
                                 ) : historyData.length === 0 ? (
-                                    <div className="text-center py-8 text-gray-500">No hay conversaciones recientes.</div>
+                                    <div className="text-center py-8 text-gray-500">Sin resultados</div>
                                 ) : (
-                                    (() => {
-                                        // Filtrar por fechas
-                                        const filtered = historyData.filter(conv => {
-                                            const convDate = new Date(conv.lastTimestamp);
-                                            convDate.setHours(0, 0, 0, 0);
-                                            if (dateFilter.from) {
-                                                const fromDate = new Date(dateFilter.from);
-                                                if (convDate < fromDate) return false;
-                                            }
-                                            if (dateFilter.to) {
-                                                const toDate = new Date(dateFilter.to);
-                                                toDate.setHours(23, 59, 59, 999);
-                                                if (convDate > toDate) return false;
-                                            }
-                                            return true;
-                                        });
-
-                                        if (filtered.length === 0) {
-                                            return <div className="text-center py-8 text-gray-500">No hay conversaciones en este rango de fechas.</div>;
-                                        }
-
-                                        return (
-                                            <>
-                                                {filtered.map((conv) => (
-                                                    <div
-                                                        key={conv.conversationId}
-                                                        onClick={() => setSelectedConversation(conv)}
-                                                        className={`p-3 rounded-lg cursor-pointer transition-all border ${selectedConversation?.conversationId === conv.conversationId ? 'bg-white/10 border-blue-500/50' : 'hover:bg-white/5 border-transparent'}`}
-                                                    >
-                                                        <div className="flex justify-between items-start mb-1">
-                                                            <div className="flex flex-col gap-1 text-left w-full overflow-hidden">
-                                                                {conv.sender ? (
-                                                                    <span className="text-xs font-medium text-green-400 truncate w-full" title={conv.sender}>
-                                                                        {conv.sender.replace('whatsapp:', '')}
-                                                                    </span>
-                                                                ) : (
-                                                                    <span className="text-xs font-mono text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded w-fit">
-                                                                        {conv.conversationId.slice(0, 8)}...
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                            <span className="text-xs text-gray-500">
-                                                                {new Date(conv.lastTimestamp).toLocaleDateString()}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-sm text-gray-300 line-clamp-2">
-                                                            {conv.messages.find(m => m.role === 'user')?.content || "Sin mensajes"}
-                                                        </p>
-                                                    </div>
-                                                ))}
-
-                                                {/* Botón Cargar Más */}
-                                                {historyPagination.hasMore && (
-                                                    <button
-                                                        onClick={() => {
-                                                            const nextPage = historyPagination.page + 1;
-                                                            setHistoryPage(nextPage);
-                                                            const idToUse = clientId || 'test-client-123';
-                                                            (async () => {
-                                                                setLoadingMore(true);
-                                                                try {
-                                                                    let url = `${LAMBDA_HISTORY_URL}?clientId=${idToUse}&channel=${channel}&page=${nextPage}&limit=20`;
-                                                                    const response = await fetch(url);
-                                                                    const result = await response.json();
-                                                                    setHistoryData(prev => [...prev, ...result.conversations]);
-                                                                    setHistoryPagination(result.pagination);
-                                                                } finally {
-                                                                    setLoadingMore(false);
-                                                                }
-                                                            })();
-                                                        }}
-                                                        disabled={loadingMore}
-                                                        className="w-full mt-3 py-2 px-4 bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/30 rounded-lg text-sm text-blue-300 transition-colors disabled:opacity-50"
-                                                    >
-                                                        {loadingMore ? 'Cargando...' : `Cargar más (${historyPagination.total - historyData.length} restantes)`}
-                                                    </button>
-                                                )}
-
-                                                {/* Total info */}
-                                                <p className="text-xs text-gray-500 text-center mt-2">
-                                                    Mostrando {historyData.length} de {historyPagination.total} conversaciones
+                                    <>
+                                        {historyData.map((conv) => (
+                                            <div
+                                                key={conv.conversationId}
+                                                onClick={() => setSelectedConversation(conv)}
+                                                className={`p-3 rounded-lg cursor-pointer transition-all border ${selectedConversation?.conversationId === conv.conversationId ? 'bg-white/10 border-blue-500/50 shadow-lg shadow-blue-500/5' : 'hover:bg-white/5 border-transparent'}`}
+                                            >
+                                                <div className="flex justify-between items-start mb-1">
+                                                    <span className="text-xs font-medium text-blue-400 truncate max-w-[120px]">
+                                                        {conv.sender ? conv.sender.replace('whatsapp:', '') : conv.conversationId.slice(0, 8)}
+                                                    </span>
+                                                    <span className="text-[10px] text-gray-500">
+                                                        {new Date(conv.lastTimestamp).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-gray-400 line-clamp-2 leading-relaxed">
+                                                    {conv.messages.find(m => m.role === 'user')?.content || "Chat vacío"}
                                                 </p>
-                                            </>
-                                        );
-                                    })()
+                                            </div>
+                                        ))}
+                                    </>
                                 )}
                             </div>
                         </div>
 
                         {/* Detalle del Chat */}
-                        <div className={`${GLASS_PANEL} lg:col-span-2 rounded-xl overflow-hidden flex flex-col`}>
+                        <div className={`${GLASS_PANEL} lg:col-span-2 rounded-xl overflow-hidden flex flex-col h-[600px] lg:h-full ${!selectedConversation ? 'hidden lg:flex' : 'flex'}`}>
                             {selectedConversation ? (
                                 <>
                                     <div className="p-4 border-b border-white/10 bg-black/20 flex justify-between items-center">
-                                        <div>
-                                            <h3 className="font-semibold">Detalle de Conversación</h3>
-                                            <p className={`text-xs ${selectedConversation.sender ? 'text-green-400 font-medium' : 'text-gray-500 font-mono'}`}>
-                                                {selectedConversation.sender ? selectedConversation.sender.replace('whatsapp:', '') : selectedConversation.conversationId}
-                                            </p>
+                                        <div className="flex items-center gap-3">
+                                            <button
+                                                onClick={() => setSelectedConversation(null)}
+                                                className="p-2 hover:bg-white/10 rounded-lg lg:hidden"
+                                            >
+                                                <X size={20} className="text-gray-400" />
+                                            </button>
+                                            <div>
+                                                <h3 className="font-semibold text-sm sm:text-base">Conversación</h3>
+                                                <p className="text-[10px] text-gray-500 font-mono truncate max-w-[150px] sm:max-w-none">
+                                                    {selectedConversation.sender ? selectedConversation.sender.replace('whatsapp:', '') : selectedConversation.conversationId}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <span className="text-xs bg-white/10 px-2 py-1 rounded text-gray-300">
-                                            {selectedConversation.messages.length} mensajes
+                                        <span className="text-[10px] bg-white/10 px-2 py-1 rounded text-gray-400 hidden sm:block">
+                                            {selectedConversation.messages.length} mensajeria
                                         </span>
                                     </div>
-                                    <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-black/40 custom-scrollbar">
+                                    <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4 bg-black/40 custom-scrollbar">
                                         {selectedConversation.messages.sort((a, b) => a.timestamp.localeCompare(b.timestamp)).map((msg, idx) => (
                                             <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                                <div className={`max-w-[80%] rounded-2xl p-4 ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-[#1f2937] text-gray-200 rounded-tl-none'}`}>
+                                                <div className={`max-w-[90%] sm:max-w-[80%] rounded-2xl p-3 sm:p-4 text-sm ${msg.role === 'user' ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-[#1f2937] text-gray-200 rounded-tl-none border border-white/5'}`}>
                                                     {msg.role === 'user' ? (
-                                                        <p className="text-sm">{msg.content}</p>
+                                                        <p>{msg.content}</p>
                                                     ) : (
-                                                        <div className="text-sm prose prose-sm prose-invert max-w-none">
-                                                            <ReactMarkdown
-                                                                components={{
-                                                                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                                                                    strong: ({ children }) => <strong className="font-bold text-white">{children}</strong>,
-                                                                    em: ({ children }) => <em className="italic">{children}</em>,
-                                                                    ul: ({ children }) => <ul className="list-disc list-inside mb-2 space-y-1">{children}</ul>,
-                                                                    ol: ({ children }) => <ol className="list-decimal list-inside mb-2 space-y-1">{children}</ol>,
-                                                                    li: ({ children }) => <li>{children}</li>,
-                                                                    a: ({ href, children }) => <a href={href} className="text-blue-400 underline hover:text-blue-300" target="_blank" rel="noopener noreferrer">{children}</a>
-                                                                }}
-                                                            >
-                                                                {msg.content}
-                                                            </ReactMarkdown>
+                                                        <div className="prose prose-sm prose-invert max-w-none">
+                                                            <ReactMarkdown>{msg.content}</ReactMarkdown>
                                                         </div>
                                                     )}
-                                                    <p className={`text-[10px] mt-2 ${msg.role === 'user' ? 'text-blue-200' : 'text-gray-500'}`}>
-                                                        {new Date(msg.timestamp).toLocaleTimeString()}
+                                                    <p className="text-[9px] mt-2 opacity-50 text-right">
+                                                        {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                     </p>
                                                 </div>
                                             </div>
@@ -640,9 +551,9 @@ const AnalyticsPage = ({ clientId, channel = 'web', highlightConversationId = nu
                                     </div>
                                 </>
                             ) : (
-                                <div className="flex-1 flex flex-col items-center justify-center text-gray-500">
-                                    <MessageSquare size={48} className="mb-4 opacity-20" />
-                                    <p>Selecciona una conversación para ver el detalle</p>
+                                <div className="flex-1 flex flex-col items-center justify-center text-gray-500 p-8 text-center">
+                                    <MessageSquare size={48} className="mb-4 opacity-10" />
+                                    <p className="text-sm">Selecciona un chat para ver los detalles</p>
                                 </div>
                             )}
                         </div>

@@ -293,7 +293,7 @@ const WidgetCustomizer = ({ config, clientId }) => {
     };
 
     return (
-        <div className="relative h-[calc(100vh-140px)] w-full overflow-hidden bg-gradient-to-br from-slate-900 via-[#111827] to-slate-900 flex flex-col items-center justify-center">
+        <div className="relative h-[calc(100vh-80px)] lg:h-[calc(100vh-140px)] w-full overflow-hidden bg-gradient-to-br from-slate-900 via-[#111827] to-slate-900 flex flex-col items-center justify-center p-4">
             {/* Background Elements to make it look 'premium' without images */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[100px]" />
@@ -304,13 +304,13 @@ const WidgetCustomizer = ({ config, clientId }) => {
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center space-y-4 relative z-10"
+                className="text-center space-y-4 relative z-10 px-4"
             >
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white/10 text-blue-400 mb-4 animate-bounce backdrop-blur-sm border border-white/5">
-                    <MessageSquare size={32} />
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/10 text-blue-400 mb-2 sm:mb-4 animate-bounce backdrop-blur-sm border border-white/5 mx-auto">
+                    <MessageSquare size={28} className="sm:size-[32px]" />
                 </div>
-                <h2 className="text-2xl font-bold text-white">Demo Interactiva</h2>
-                <p className="text-slate-400 max-w-md mx-auto">
+                <h2 className="text-xl sm:text-2xl font-bold text-white">Demo Interactiva</h2>
+                <p className="text-slate-400 text-sm sm:text-base max-w-sm sm:max-w-md mx-auto leading-relaxed">
                     Haz clic en el icono flotante de la esquina inferior derecha para probar <span className="font-bold text-blue-400">PymerIA</span>.
                 </p>
             </motion.div>

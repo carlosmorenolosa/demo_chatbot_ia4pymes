@@ -150,14 +150,21 @@ const MainApp = () => {
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
   const [uploadStatus, setUploadStatus] = useState('');
   const [saveStatus, setSaveStatus] = useState('');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // Estado para modal de confirmación
-  const [deleteModal, setDeleteModal] = useState({ isOpen: false, docName: null, isLoading: false });
-
-  // Estado para progreso de subida
-  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, fileName: '' });
-  const fileInputRef = useRef(null);
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 1024) {
+        setIsSidebarOpen(false);
+      } else {
+        setIsSidebarOpen(true);
+      }
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // --- CONSTANTS ---
   const LAMBDA_SAVE_CONFIG_URL = import.meta.env.VITE_LAMBDA_SAVE_CONFIG;
@@ -355,92 +362,130 @@ const MainApp = () => {
     return true;
   });
 
+  const SidebarContent = () => (
+    <>
+      <div className="flex h-20 items-center justify-between px-6 border-b border-border/50">
+        <div className="flex items-center gap-3 overflow-hidden">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-white shadow-lg shadow-primary/20">
+            <img src="/logo.png" alt="IA4PYMES" className="w-full h-full object-cover" />
+          </div>
+          {(isSidebarOpen || isMobileMenuOpen) && (
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="font-bold text-lg tracking-tight whitespace-nowrap"
+            >
+              Chatbot Admin
+            </motion.span>
+          )}
+        </div>
+        <Button variant="ghost" size="icon" onClick={() => {
+          if (isMobileMenuOpen) setIsMobileMenuOpen(false);
+          else setIsSidebarOpen(!isSidebarOpen);
+        }} className="hidden lg:flex shrink-0">
+          {isSidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+        </Button>
+        <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden shrink-0">
+          <X className="h-4 w-4" />
+        </Button>
+      </div>
+
+      <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
+        {sections.map((section) => (
+          <Tooltip key={section.id} content={section.tooltip} position="right" disabled={isMobileMenuOpen}>
+            <Button
+              variant={activeSection === section.id ? 'secondary' : 'ghost'}
+              className={cn(
+                "w-full justify-start gap-3 h-11 relative overflow-hidden group",
+                activeSection === section.id && "bg-primary/10 text-primary hover:bg-primary/15",
+                (!isSidebarOpen && !isMobileMenuOpen) && "justify-center px-0"
+              )}
+              onClick={() => {
+                setActiveSection(section.id);
+                setIsMobileMenuOpen(false);
+              }}
+            >
+              {activeSection === section.id && (
+                <motion.div
+                  layoutId="activeSection"
+                  className="absolute inset-0 bg-primary/10 border-l-2 border-primary"
+                  initial={false}
+                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                />
+              )}
+              <section.icon className={cn("h-5 w-5 relative z-10", activeSection === section.id ? "text-primary" : "text-muted-foreground")} />
+              {(isSidebarOpen || isMobileMenuOpen) && (
+                <span className="relative z-10 flex-1 text-left">{section.label}</span>
+              )}
+            </Button>
+          </Tooltip>
+        ))}
+      </nav>
+
+      <div className="p-4 border-t border-border/50 space-y-2">
+        {(isSidebarOpen || isMobileMenuOpen) && <GlobalUsageBadge count={globalStats} />}
+
+        <div className={cn("flex items-center gap-3 rounded-xl bg-muted/50 p-3 border border-white/5", (!isSidebarOpen && !isMobileMenuOpen) && "justify-center p-2")}>
+          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-inner">
+            {user?.username?.charAt(0)?.toUpperCase() || 'U'}
+          </div>
+          {(isSidebarOpen || isMobileMenuOpen) && (
+            <div className="overflow-hidden flex-1">
+              <p className="text-sm font-medium truncate">{user?.username || 'Usuario'}</p>
+            </div>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={logout}
+          className={cn(
+            "w-full text-red-400 hover:text-red-300 hover:bg-red-500/10",
+            (!isSidebarOpen && !isMobileMenuOpen) && "justify-center px-0"
+          )}
+        >
+          <LogOut className="h-4 w-4" />
+          {(isSidebarOpen || isMobileMenuOpen) && <span className="ml-2">Cerrar sesión</span>}
+        </Button>
+      </div>
+    </>
+  );
+
   return (
     <div className="flex h-screen bg-background text-foreground overflow-hidden font-sans selection:bg-primary/20">
 
-      {/* --- Sidebar --- */}
+      {/* --- Sidebar Desktop --- */}
       <motion.aside
         initial={false}
         animate={{ width: isSidebarOpen ? 280 : 80 }}
-        className="relative z-20 flex flex-col border-r bg-card/50 backdrop-blur-xl"
+        className="hidden lg:flex relative z-20 flex-col border-r bg-card/50 backdrop-blur-xl"
       >
-        <div className="flex h-20 items-center justify-between px-6 border-b border-border/50">
-          <div className="flex items-center gap-3 overflow-hidden">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl overflow-hidden bg-white shadow-lg shadow-primary/20">
-              <img src="/logo.png" alt="IA4PYMES" className="w-full h-full object-cover" />
-            </div>
-            {isSidebarOpen && (
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="font-bold text-lg tracking-tight whitespace-nowrap"
-              >
-                Chatbot Admin
-              </motion.span>
-            )}
-          </div>
-          <Button variant="ghost" size="icon" onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="shrink-0">
-            {isSidebarOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-          </Button>
-        </div>
-
-        <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
-          {sections.map((section) => (
-            <Tooltip key={section.id} content={section.tooltip} position="right">
-              <Button
-                variant={activeSection === section.id ? 'secondary' : 'ghost'}
-                className={cn(
-                  "w-full justify-start gap-3 h-11 relative overflow-hidden group",
-                  activeSection === section.id && "bg-primary/10 text-primary hover:bg-primary/15",
-                  !isSidebarOpen && "justify-center px-0"
-                )}
-                onClick={() => setActiveSection(section.id)}
-              >
-                {activeSection === section.id && (
-                  <motion.div
-                    layoutId="activeSection"
-                    className="absolute inset-0 bg-primary/10 border-l-2 border-primary"
-                    initial={false}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
-                <section.icon className={cn("h-5 w-5 relative z-10", activeSection === section.id ? "text-primary" : "text-muted-foreground")} />
-                {isSidebarOpen && (
-                  <span className="relative z-10 flex-1 text-left">{section.label}</span>
-                )}
-              </Button>
-            </Tooltip>
-          ))}
-        </nav>
-
-        <div className="p-4 border-t border-border/50 space-y-2">
-          {/* Contador Global de Uso */}
-          {isSidebarOpen && <GlobalUsageBadge count={globalStats} />}
-
-          <div className={cn("flex items-center gap-3 rounded-xl bg-muted/50 p-3 border border-white/5", !isSidebarOpen && "justify-center p-2")}>
-            <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-primary to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-inner">
-              {user?.username?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
-            {isSidebarOpen && (
-              <div className="overflow-hidden flex-1">
-                <p className="text-sm font-medium truncate">{user?.username || 'Usuario'}</p>
-              </div>
-            )}
-          </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={logout}
-            className={cn(
-              "w-full text-red-400 hover:text-red-300 hover:bg-red-500/10",
-              !isSidebarOpen && "justify-center px-0"
-            )}
-          >
-            <LogOut className="h-4 w-4" />
-            {isSidebarOpen && <span className="ml-2">Cerrar sesión</span>}
-          </Button>
-        </div>
+        <SidebarContent />
       </motion.aside>
+
+      {/* --- Sidebar Mobile (Overlay) --- */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            />
+            <motion.aside
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="fixed inset-y-0 left-0 w-[280px] bg-card z-50 lg:hidden flex flex-col border-r shadow-2xl"
+            >
+              <SidebarContent />
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* --- Main Content --- */}
       <main className="flex-1 flex flex-col relative overflow-hidden bg-slate-50/50 dark:bg-black/20">
@@ -451,22 +496,37 @@ const MainApp = () => {
         </div>
 
         {/* Header */}
-        <header className="h-20 flex items-center justify-between px-8 border-b border-border/50 bg-background/50 backdrop-blur-sm sticky top-0 z-10">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-              {sections.find(s => s.id === activeSection)?.label}
-              <Sparkles className="h-4 w-4 text-yellow-500 animate-pulse" />
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              {activeSection === 'configuracion' && 'Define el comportamiento de tu IA'}
-              {activeSection === 'database' && 'Gestiona el conocimiento de tu asistente'}
-              {activeSection === 'analytics' && 'Revisa el rendimiento de tu chatbot'}
-              {activeSection === 'probar' && 'Prueba tu chatbot en tiempo real'}
-            </p>
+        <header className="h-20 flex items-center justify-between px-4 sm:px-8 border-b border-border/50 bg-background/50 backdrop-blur-sm sticky top-0 z-10 shrink-0">
+          <div className="flex items-center gap-4 min-w-0">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden shrink-0"
+            >
+              <Menu className="h-6 w-6" />
+            </Button>
+            <div className="min-w-0">
+              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2 truncate">
+                {sections.find(s => s.id === activeSection)?.label}
+                <Sparkles className="h-4 w-4 text-yellow-500 animate-pulse shrink-0" />
+              </h1>
+              <p className="text-[10px] sm:text-sm text-muted-foreground truncate hidden xs:block">
+                {activeSection === 'configuracion' && 'Define el comportamiento de tu IA'}
+                {activeSection === 'database' && 'Gestiona el conocimiento de tu asistente'}
+                {activeSection === 'analytics' && 'Revisa el rendimiento de tu chatbot'}
+                {activeSection === 'probar' && 'Prueba tu chatbot en tiempo real'}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <ClientSelector />
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-500 ring-1 ring-inset ring-green-500/20">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <div className="hidden sm:block">
+              <ClientSelector />
+            </div>
+            <div className="sm:hidden w-32 translate-y-[-2px]">
+              <ClientSelector />
+            </div>
+            <span className="hidden md:inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-3 py-1 text-xs font-medium text-green-500 ring-1 ring-inset ring-green-500/20">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
@@ -477,7 +537,7 @@ const MainApp = () => {
         </header>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
           <div className="mx-auto max-w-6xl space-y-8">
             <AnimatePresence mode="wait">
               <motion.div
