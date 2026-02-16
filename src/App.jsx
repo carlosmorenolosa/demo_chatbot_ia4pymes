@@ -153,6 +153,13 @@ const MainApp = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Estado para modal de confirmación
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, docName: null, isLoading: false });
+
+  // Estado para progreso de subida
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0, fileName: '' });
+  const fileInputRef = useRef(null);
+
   // Handle window resize
   useEffect(() => {
     const handleResize = () => {
